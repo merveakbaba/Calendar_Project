@@ -2,14 +2,14 @@ import requests
 
 
 class OllamaYoneticisi:
-    def __init__(self, url="http://178.233.128.84:12436/api/message"):
+  #  def __init__(self, url="http:///api/message"):
         """
         Ollama API'si için bağlantı URL'sini başlatır.
 
         Args:
             url (str): Ollama API'sinin URL'si.
         """
-        self.url = url
+        #self.url = url
 
     def mesaj_gonder(self, mesaj):
         def mesaj_gonder(self, mesaj):
