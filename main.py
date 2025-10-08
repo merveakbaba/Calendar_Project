@@ -2,21 +2,48 @@ import configparser
 from ollama_manager import OllamaYoneticisi
 from calendar_manager import TakvimYoneticisi
 from prompt import generate_prompt
+from auth_manager import AuthManager
 
 
 def main():
-    # Config dosyasını oku
+    auth = AuthManager()  # Kullanıcı yönetimi
+   
+    while True:
+        print("\n1. Giriş Yap")
+        print("2. Kayıt Ol")
+        print("3. Çıkış")
+        secim = input("Seçiminiz (1-3): ").strip()
+
+        if secim == "1":
+            email = input("E-posta: ").strip()
+            sifre = input("Şifre: ").strip()
+            result = auth.kullanici_giris(email, sifre)
+            print(result)
+            if "başarılı" in result:
+                break
+
+        elif secim == "2":
+            email = input("E-posta: ").strip()
+            sifre = input("Şifre: ").strip()
+            print(auth.kullanici_kayit(email, sifre))
+
+        elif secim == "3":
+            print("Program kapandı.")
+            return
+        else:
+            print("1-3 arasında bir rakam girin.")
+
+    # Giriş başarılı → kullanıcının token ve credential dosyaları
     config = configparser.ConfigParser()
     config.read('secret.cfg')
     user_credential_file = config['google']['user_credential_file']
-    token_file = config['google']['token_file']
+    token_file = f"token_{email}.json"  # kullanıcıya özel token dosyası
 
-    # Yöneticileri oluştur
     takvim = TakvimYoneticisi(user_credential_file, token_file)
     ollama_yoneticisi = OllamaYoneticisi()
 
     while True:
-        print("\n--- Randevu Yönetim Sistemi ---")
+        print("\n--- Menü ---")
         print("1. Randevu Ekle")
         print("2. Randevuları Listele")
         print("3. Randevu Sil")
@@ -24,7 +51,7 @@ def main():
         print("5. Doğal Dil Komutu (AI ile)")
         print("6. Çıkış")
 
-        secim = input("Lütfen bir seçim yapın (1-6): ").strip()
+        secim = input("Seçiminiz (1-6): ").strip()
 
         if secim == '1':
             baslik = input("Randevu Başlığı: ").strip()
@@ -51,31 +78,27 @@ def main():
 
         elif secim == '5':
             komut = input("Doğal dilde bir komut girin: ").strip()
-            prompt = generate_prompt(komut)  # Generate prompt function call
-            cevap = ollama_yoneticisi.mesaj_gonder(prompt)
+            cevap = ollama_yoneticisi.mesaj_gonder(komut)
             print("Ollama's response:", cevap)
 
-            # If an appointment addition is requested, extract details and add the appointment
+            # AI’den randevu ekleme talebi varsa
             if "add" in komut.lower():
                 try:
-                    details = cevap.split("|")  # Extract details from response
+                    details = cevap.split("|")
                     if len(details) == 5:
                         title, location, description, start_time, end_time = [info.strip() for info in details]
                         takvim.randevu_ekle(title, location, description, start_time, end_time)
                     else:
-                        print("Incomplete information received from AI. Please try manual input.")
+                        print("AI’den eksik bilgi geldi, lütfen manuel girin.")
                 except Exception as e:
-                    print("An error occurred:", e)
+                    print("Hata oluştu:", e)
 
         elif secim == '6':
-            print("Exiting the program... Goodbye!")
+            print("Program kapandı.")
             break
-
         else:
-            print("Invalid selection. Please enter a number between 1 and 6.")
+            print("1-6 arasında bir rakam girin.")
 
 
 if __name__ == '__main__':
     main()
-"""Ollama’nın gerçekten fonksiyonu çağırması için entegrasyon kodunu kontrol etmelisin (örneğin, doğal dil
- girişini Python çağrılarına çevirmesi için özel bir exec() veya fonksiyon çağırma mekanizması var mı?)."""
